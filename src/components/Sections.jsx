@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { FiArrowUpRight, FiArrowRight, FiCopy, FiCheck, FiSend, FiLinkedin } from 'react-icons/fi'
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FiArrowUpRight, FiArrowRight, FiCopy, FiCheck, FiSend, FiLinkedin, FiGithub, FiFileText, FiDownload, FiChevronDown } from 'react-icons/fi'
 import {
   profile, socials, experiences, projects, hackathons, dsa, skills, education, certifications, interests, highlights, quote,
 } from '../data'
-import { SectionHead, Reveal, Chips, Magnetic, SplitText, useSpotlight, icons } from './ui'
+import ConcaveCarousel from './ConcaveCarousel'
+import { SectionHead, Reveal, Chips, Magnetic, SplitText, icons } from './ui'
 
 const easeOut = [0.22, 1, 0.36, 1]
 
@@ -54,7 +55,6 @@ export function Experience({ n }) {
               {exp.stats.map((s) => (
                 <div key={s.label} className="stub-stat"><strong>{s.value}</strong><span>{s.label}</span></div>
               ))}
-              <div className="barcode" />
               <div className="stub-id">{exp.company.toUpperCase()}-{String(i + 1).padStart(3, '0')}</div>
             </div>
           </motion.div>
@@ -64,62 +64,31 @@ export function Experience({ n }) {
   )
 }
 
-/* ---------------- Projects: cards with live "terminal" mockups ---------------- */
-function TypedTerminal({ project }) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-100px' })
-  const lines = useMemo(() => [
-    { c: 'p', t: `$ init ${project.title.split(' ')[0].toLowerCase()}` },
-    { c: '', t: `> stack: ${project.tags.join(' + ')}` },
-    { c: '', t: `> building ${'█'.repeat(12)} 100%` },
-    { c: 'ok', t: `✓ ${project.status.toLowerCase()} — ready` },
-  ], [project])
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    if (!inView || count >= lines.length) return
-    const t = setTimeout(() => setCount((c) => c + 1), count === 0 ? 300 : 550)
-    return () => clearTimeout(t)
-  }, [inView, count, lines.length])
+/* ---------------- Projects: concave carousel ---------------- */
+function ProjectPanel({ p, i, total }) {
+  const stop = (e) => e.stopPropagation()
   return (
-    <div className="term" ref={ref}>
-      <div className="term-top"><i /><i /><i /><span>{project.title.toLowerCase()}</span></div>
-      <div className="term-body">
-        {lines.slice(0, count).map((l, i) => (
-          <motion.div key={i} className={l.c === 'ok' ? 'ok' : ''} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}>
-            {l.c === 'p' ? <><span className="p">$</span>{l.t.slice(1)}</> : l.t}
-          </motion.div>
-        ))}
-        {count < lines.length && <div><span className="caret" /></div>}
-      </div>
-    </div>
-  )
-}
-
-function ProjectCard({ p, i, total }) {
-  const spot = useSpotlight()
-  const Tag = p.href ? motion.a : motion.div
-  return (
-    <Tag
-      {...spot}
-      {...(p.href ? { href: p.href, target: '_blank', rel: 'noreferrer' } : {})}
-      className="proj"
-      initial={{ opacity: 0, y: 60 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.9, ease: easeOut }}
-    >
-      <div>
-        <div className="proj-meta">
+    <article className="cc-card" style={{ '--hue': p.hue }}>
+      <div className="cc-art">
+        <div className="cc-art-top">
           <span>project {String(i + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</span>
-          <span className="status">{p.status}</span>
+          <span className={`status${p.ongoing ? ' ongoing' : ''}`}>{p.status}</span>
         </div>
+        <span className="cc-num" aria-hidden>{String(i + 1).padStart(2, '0')}</span>
+        <div className="cc-cmd"><span>$</span> init {p.title.split(' ')[0].toLowerCase()}<i className="caret" /></div>
+      </div>
+      <div className="cc-body">
         <h3>{p.title}</h3>
         <p>{p.description}</p>
-        <Chips items={p.tags} />
-        {p.href && <span className="proj-link">View project <FiArrowUpRight /></span>}
+        <Chips items={p.tags.slice(0, 4)} />
+        {(p.href || p.live) && (
+          <div className="proj-links">
+            {p.href && <a className="proj-link" href={p.href} target="_blank" rel="noreferrer" onClick={stop}><FiGithub /> GitHub <FiArrowUpRight /></a>}
+            {p.live && <a className="proj-link" href={p.live} target="_blank" rel="noreferrer" onClick={stop}>Live app <FiArrowUpRight /></a>}
+          </div>
+        )}
       </div>
-      <TypedTerminal project={p} />
-    </Tag>
+    </article>
   )
 }
 
@@ -127,11 +96,22 @@ export function Projects({ n }) {
   return (
     <section id="projects">
       <div className="wrap">
-        <SectionHead n={n} label="selected work" title={[{ t: "things i've " }, { t: 'built.', className: 'dbl' }]} note="Cross-platform apps and computer-vision experiments, from idea to working product." />
-        <div className="projects">
-          {projects.map((p, i) => <ProjectCard key={p.title} p={p} i={i} total={projects.length} />)}
-        </div>
+        <SectionHead n={n} label="selected work" title={[{ t: "things i've " }, { t: 'built.', className: 'dbl' }]} note="Android, web and cross-platform apps, a Chrome extension and computer-vision experiments. Drag the wall to explore." />
       </div>
+      <Reveal>
+        <ConcaveCarousel
+          items={projects}
+          ariaLabel="Projects. Use the arrow keys to turn, Enter to open."
+          getHref={(p) => p.href || p.live}
+          renderItem={(p, i) => <ProjectPanel p={p} i={i} total={projects.length} />}
+          renderCaption={(p) => (
+            <>
+              <strong>{p.title}</strong>
+              <span>{p.href || p.live ? 'tap the centre card to open' : p.tags.slice(0, 3).join(' · ')}</span>
+            </>
+          )}
+        />
+      </Reveal>
     </section>
   )
 }
@@ -171,6 +151,67 @@ function Receipt({ children, delay }) {
   )
 }
 
+/* ---------------- Résumé: framed PDF viewer + open / download ---------------- */
+export function Resume({ n }) {
+  const [open, setOpen] = useState(false)
+  const file = profile.resume
+  const name = `${profile.name.replace(/\s+/g, '_')}_Resume.pdf`
+  return (
+    <section id="resume">
+      <div className="wrap">
+        <SectionHead n={n} label="résumé" title={[{ t: 'the one-page ' }, { t: 'version.', className: 'dbl' }]} note="Everything above, on a single page. Tap to read it here, or download it." />
+        <Reveal>
+          <div className={`resume${open ? ' open' : ''}`}>
+            <div className="resume-card">
+              <div className="resume-icon"><FiFileText size={26} /></div>
+              <div className="resume-info">
+                <strong>{profile.name}</strong>
+                <span>{name}</span>
+              </div>
+              <div className="resume-actions">
+                <button className="btn btn-fire btn-sm" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="resume-viewer">
+                  {open ? 'Hide résumé' : 'View résumé'} <FiChevronDown className={`chev${open ? ' up' : ''}`} />
+                </button>
+                <a className="icon-btn" href={file} download={name} aria-label="Download résumé" title="Download">
+                  <FiDownload size={14} />
+                </a>
+              </div>
+            </div>
+            <AnimatePresence initial={false}>
+              {open && (
+                <motion.div
+                  id="resume-viewer"
+                  className="resume-panel"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.55, ease: easeOut }}
+                >
+                  <div className="term-top resume-bar">
+                    <i /><i /><i />
+                    <span>{name}</span>
+                    <a className="resume-newtab" href={file} target="_blank" rel="noreferrer">open in new tab <FiArrowUpRight /></a>
+                  </div>
+                  <object className="resume-view" data={`${file}#view=FitH&toolbar=0&navpanes=0`} type="application/pdf" aria-label="Résumé PDF">
+                    {/* Shown where the browser can't display PDFs inline (most phones) */}
+                    <div className="resume-fallback">
+                      <p>Your browser can't show the PDF here.</p>
+                      <div className="hero-ctas">
+                        <a className="btn btn-fire" href={file} target="_blank" rel="noreferrer">Open résumé <FiArrowUpRight className="arrow" /></a>
+                        <a className="btn btn-ghost" href={file} download={name}><span>Download</span> ↓</a>
+                      </div>
+                    </div>
+                  </object>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
 export function Education({ n }) {
   return (
     <section id="education">
@@ -187,7 +228,6 @@ export function Education({ n }) {
               <div key={c} className="rc-row"><span>{c}</span><span className="lead" /><span className="v">✓</span></div>
             ))}
             <div className="rc-total"><span>CGPA</span><strong>8.65<small style={{ fontSize: 14, color: 'var(--muted)' }}>/10</small></strong></div>
-            <div className="barcode" />
             <div className="rc-foot">thank you for reading</div>
           </Receipt>
 

@@ -40,30 +40,44 @@ function useClock(tz) {
   return time
 }
 
-// Rising ember particles behind the hero
+// Rising ember particles behind the hero.
+// Glow comes from a pre-rendered sprite (canvas shadowBlur is very slow),
+// and the loop stops while the hero is off-screen or the tab is hidden.
 function Embers() {
   const ref = useRef(null)
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const canvas = ref.current
     const ctx = canvas.getContext('2d')
-    let w, h, raf
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const small = window.matchMedia('(max-width: 700px)').matches
+    const dpr = Math.min(window.devicePixelRatio || 1, small ? 1.5 : 2)
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--ember').trim() || '#ff5b1f'
+
+    const sprite = document.createElement('canvas')
+    const S = 32
+    sprite.width = sprite.height = S
+    const sctx = sprite.getContext('2d')
+    const g = sctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2)
+    g.addColorStop(0, color)
+    g.addColorStop(0.25, color)
+    g.addColorStop(1, 'transparent')
+    sctx.fillStyle = g
+    sctx.fillRect(0, 0, S, S)
+
+    let w = 0, h = 0, raf = 0, running = false, onScreen = true
     const resize = () => {
       w = canvas.offsetWidth
       h = canvas.offsetHeight
-      canvas.width = w * dpr
-      canvas.height = h * dpr
+      canvas.width = Math.round(w * dpr)
+      canvas.height = Math.round(h * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
     resize()
-    window.addEventListener('resize', resize)
     const spawn = (y = h + Math.random() * h * 0.3) => ({
       x: Math.random() * w, y, r: Math.random() * 1.8 + 0.4,
       vy: Math.random() * 0.5 + 0.15, vx: (Math.random() - 0.5) * 0.25, life: Math.random() * Math.PI * 2,
     })
-    const parts = Array.from({ length: 70 }, () => spawn(Math.random() * h))
-    const color = getComputedStyle(document.documentElement).getPropertyValue('--ember').trim() || '#ff5b1f'
+    const parts = Array.from({ length: small ? 32 : 60 }, () => spawn(Math.random() * h))
     const draw = () => {
       ctx.clearRect(0, 0, w, h)
       for (const p of parts) {
@@ -71,26 +85,47 @@ function Embers() {
         p.life += 0.02
         p.x += p.vx + Math.sin(p.life) * 0.2
         if (p.y < -10) Object.assign(p, spawn())
-        const fade = Math.min(1, p.y / h) * (0.5 + Math.sin(p.life * 2) * 0.3)
-        ctx.globalAlpha = Math.max(0, fade)
-        ctx.fillStyle = color
-        ctx.shadowColor = color
-        ctx.shadowBlur = 8
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fill()
+        const a = Math.min(1, p.y / h) * (0.5 + Math.sin(p.life * 2) * 0.3)
+        if (a <= 0) continue
+        ctx.globalAlpha = a
+        const d = p.r * 7
+        ctx.drawImage(sprite, p.x - d / 2, p.y - d / 2, d, d)
       }
       raf = requestAnimationFrame(draw)
     }
-    draw()
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
+    const update = () => {
+      const should = onScreen && !document.hidden
+      if (should && !running) { running = true; raf = requestAnimationFrame(draw) }
+      else if (!should && running) { running = false; cancelAnimationFrame(raf) }
+    }
+    const io = new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; update() })
+    io.observe(canvas)
+    const ro = new ResizeObserver(resize)
+    ro.observe(canvas)
+    document.addEventListener('visibilitychange', update)
+    update()
+    return () => {
+      cancelAnimationFrame(raf)
+      io.disconnect()
+      ro.disconnect()
+      document.removeEventListener('visibilitychange', update)
+    }
   }, [])
   return <canvas ref={ref} className="embers" aria-hidden />
 }
 
-export default function Hero() {
+// Small components so the typewriter / clock re-render only themselves, not the whole hero
+function Role() {
   const role = useTypewriter(profile.roles)
+  return <div className="hl">{role}<span className="caret" /></div>
+}
+
+function Clock() {
   const time = useClock(profile.timezone)
+  return <span className="eyebrow"><FiClock size={12} /> {time} IST</span>
+}
+
+export default function Hero() {
   const first = profile.name.split(' ').pop().toLowerCase()
 
   return (
@@ -103,7 +138,7 @@ export default function Hero() {
         transition={{ duration: 0.8, delay: 0.1, ease: easeOut }}
       >
         <span className="avail"><span className="dot-live" /> currently @ infosys · specialist programmer</span>
-        <span className="eyebrow"><FiClock size={12} /> {time} IST</span>
+        <Clock />
       </motion.div>
 
       <SplitText
@@ -161,7 +196,7 @@ export default function Hero() {
           <div className="term-top"><i /><i /><i /><span>~/{first} — zsh</span></div>
           <div className="term-body">
             <div><span className="p">$</span> whoami</div>
-            <div className="hl">{role}<span className="caret" /></div>
+            <Role />
             <div><span className="p">$</span> cat highlights.txt</div>
             {profile.highlights.map((h) => (
               <div key={h}><span className="ok">✓</span> {h}</div>

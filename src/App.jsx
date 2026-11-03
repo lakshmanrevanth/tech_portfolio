@@ -6,20 +6,27 @@ import Hero from './components/Hero'
 import CommandPalette from './components/CommandPalette'
 import { Marquee } from './components/ui'
 import {
-  Experience, Projects, Hackathons, GitHubActivity, DSA, Skills, Education, Interests, Highlights, Guestbook, Contact, Footer,
+  Experience, Projects, Hackathons, GitHubActivity, DSA, Skills, Education, Resume, Interests, Highlights, Guestbook, Contact, Footer,
 } from './components/Sections'
 
+// Soft glow that follows the mouse. Desktop only (no point on touch screens).
+// Moved with transforms so it never triggers layout.
 function CursorGlow() {
+  const [enabled] = useState(() =>
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const x = useMotionValue(-1000)
   const y = useMotionValue(-1000)
   const sx = useSpring(x, { stiffness: 90, damping: 20 })
   const sy = useSpring(y, { stiffness: 90, damping: 20 })
   useEffect(() => {
+    if (!enabled) return
     const move = (e) => { x.set(e.clientX); y.set(e.clientY) }
-    window.addEventListener('pointermove', move)
+    window.addEventListener('pointermove', move, { passive: true })
     return () => window.removeEventListener('pointermove', move)
-  }, [x, y])
-  return <motion.div className="cursor-glow" style={{ left: sx, top: sy }} />
+  }, [enabled, x, y])
+  if (!enabled) return null
+  return <motion.div className="cursor-glow" style={{ x: sx, y: sy }} />
 }
 
 const navLinks = [
@@ -27,6 +34,7 @@ const navLinks = [
   { href: '#projects', label: 'work' },
   { href: '#skills', label: 'skills' },
   { href: '#education', label: 'education' },
+  ...(profile.resume ? [{ href: '#resume', label: 'résumé' }] : []),
   { href: '#contact', label: 'contact' },
 ]
 
@@ -54,7 +62,8 @@ export default function App() {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setCmdOpen((o) => !o) }
     }
-    const onScroll = () => setScrolled(window.scrollY > 20)
+    let last = false
+    const onScroll = () => { const v = window.scrollY > 20; if (v !== last) { last = v; setScrolled(v) } }
     window.addEventListener('keydown', onKey)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll) }
@@ -69,6 +78,7 @@ export default function App() {
     dsa.length > 0 && DSA,
     Skills,
     Education,
+    profile.resume && Resume,
     interests.watching.length > 0 && Interests,
     highlights.length > 0 && Highlights,
     Guestbook,
@@ -92,7 +102,7 @@ export default function App() {
             {navLinks.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
           </div>
           <div className="nav-actions">
-            <button className="icon-btn" onClick={() => setCmdOpen(true)} aria-label="Open command palette">
+            <button className="icon-btn cmd-btn" onClick={() => setCmdOpen(true)} aria-label="Open command palette">
               <FiCommand size={13} /><span className="kbd-label">K</span>
             </button>
             <motion.button className="icon-btn" onClick={toggleTheme} whileTap={{ rotate: 180, scale: 0.9 }} aria-label="Toggle theme">

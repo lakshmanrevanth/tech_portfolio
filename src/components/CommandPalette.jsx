@@ -13,6 +13,7 @@ export const navSections = [
   { id: 'dsa', label: 'DSA' },
   { id: 'skills', label: 'Skills' },
   { id: 'education', label: 'Education' },
+  { id: 'resume', label: 'Résumé' },
   { id: 'interests', label: 'Interests' },
   { id: 'highlights', label: 'Highlights' },
   { id: 'guestbook', label: 'Guestbook' },

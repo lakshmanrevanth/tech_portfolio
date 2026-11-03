@@ -15,7 +15,7 @@ export const profile = {
   ],
   email: 'revanth3527@gmail.com',
   calLink: '', // e.g. 'https://cal.com/yourhandle' — shows "Book an intro call" when set
-  resume: '/resume.pdf',
+  resume: 'resume.pdf', // file lives in public/ — set to '' to hide the Résumé section
   github: '', // GitHub username — enables the contribution heatmap
 }
 
@@ -23,7 +23,7 @@ export const socials = [
   { label: 'Email', href: 'mailto:revanth3527@gmail.com', icon: 'mail' },
   // { label: 'GitHub', href: 'https://github.com/yourhandle', icon: 'github' },
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/reddy-lakshman-revanth-796040247/', icon: 'linkedin' },
-  // { label: 'Resume', href: '/resume.pdf', icon: 'resume' }, // add public/resume.pdf, then uncomment
+  { label: 'Resume', href: 'resume.pdf', icon: 'resume' },
 ]
 
 export const experiences = [
@@ -95,11 +95,29 @@ export const experiences = [
 
 export const projects = [
   {
+    title: 'Kosh · Personal Finance',
+    status: 'In progress',
+    ongoing: true,
+    description: 'Offline-first Android app that tracks expenses, bank balances, EMIs and loans in one place. It records UPI and bank transactions automatically from SMS and includes budgets, net worth, reports and a home-screen widget. Data backs up to Firebase and can sync to Google Sheets.',
+    tags: ['Kotlin', 'Jetpack Compose', 'Room', 'WorkManager', 'Firebase'],
+    href: 'https://github.com/lakshmanrevanth/kosh-finance',
+    hue: 30,
+  },
+  {
+    title: 'CheckLater · Save Links',
+    status: 'Live',
+    description: 'Chrome extension and installable web app (PWA) for saving links now and opening them later on any device. One sync code replaces passwords. It sorts links into categories automatically, removes tracking parameters, syncs live and works offline.',
+    tags: ['JavaScript', 'Chrome Extension', 'PWA', 'Firebase'],
+    href: 'https://github.com/lakshmanrevanth/check-later-extension',
+    live: 'https://checklater-ea1ba.web.app',
+    hue: 240,
+  },
+  {
     title: 'Play-T · Transfer Music',
     status: 'Completed',
     description: 'Cross-platform app to transfer playlists between music streaming platforms via a shareable link, backed by secure REST APIs with token-based access control and validated playlist mappings.',
     tags: ['Flutter', 'Supabase', 'Provider', 'REST API', 'MVC'],
-    href: '', // add the GitHub repo URL
+    href: 'https://github.com/lakshmanrevanth/PlayT-A-Platform-To-Transfer-Playlists',
     hue: 280,
   },
   {
@@ -107,7 +125,7 @@ export const projects = [
     status: 'Completed',
     description: 'Finance management app that tracks payment data and EMI history, with SQL aggregation, CRUD REST APIs and dashboards summarising lender–borrower transactions.',
     tags: ['Flutter', 'Supabase', 'SQL', 'REST API', 'MVC'],
-    href: '', // add the GitHub repo URL
+    href: 'https://github.com/lakshmanrevanth/NoteMate',
     hue: 160,
   },
   {
