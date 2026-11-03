@@ -1,121 +1,45 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion, useScroll, useSpring, useMotionValue } from 'framer-motion'
-import { FiCommand, FiSun, FiMoon, FiHome, FiBriefcase, FiFolder, FiCode, FiMessageSquare, FiMail } from 'react-icons/fi'
-import { profile, hackathons, dsa, interests, highlights } from './data'
+import { FiCommand, FiSun, FiMoon } from 'react-icons/fi'
+import { profile, skills, hackathons, dsa, interests, highlights } from './data'
 import Hero from './components/Hero'
 import CommandPalette from './components/CommandPalette'
+import { Marquee } from './components/ui'
 import {
-  Experience, Projects, Hackathons, GitHubActivity, DSA, Skills, Education, Interests, Highlights, Guestbook, Quote, Footer,
+  Experience, Projects, Hackathons, GitHubActivity, DSA, Skills, Education, Interests, Highlights, Guestbook, Contact, Footer,
 } from './components/Sections'
 
-function useClock(tz) {
-  const fmt = () => new Date().toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
-  const [time, setTime] = useState(fmt)
-  useEffect(() => {
-    const t = setInterval(() => setTime(fmt()), 1000)
-    return () => clearInterval(t)
-  }, [])
-  return time
-}
-
-const dockItems = [
-  { id: 'home', label: 'Home', icon: FiHome },
-  { id: 'experience', label: 'Experience', icon: FiBriefcase },
-  { id: 'projects', label: 'Projects', icon: FiFolder },
-  { id: 'skills', label: 'Skills', icon: FiCode },
-  { id: 'guestbook', label: 'Guestbook', icon: FiMessageSquare },
-]
-
-function Dock({ onCmd }) {
-  const [active, setActive] = useState('home')
-  const [hover, setHover] = useState(null)
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
-      { rootMargin: '-45% 0px -50% 0px' },
-    )
-    dockItems.forEach((d) => { const el = document.getElementById(d.id); if (el) obs.observe(el) })
-    return () => obs.disconnect()
-  }, [])
-
-  const renderItem = ({ id, label, icon: Icon, onClick, href }) => (
-    <motion.a
-      key={id}
-      href={href || `#${id}`}
-      onClick={onClick}
-      className={`dock-item ${active === id ? 'active' : ''}`}
-      onMouseEnter={() => setHover(label)}
-      onMouseLeave={() => setHover(null)}
-      whileHover={{ scale: 1.15, y: -3 }}
-      whileTap={{ scale: 0.92 }}
-      aria-label={label}
-    >
-      {active === id && <motion.span layoutId="dock-pill" className="pill" transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
-      <Icon size={17} />
-      {hover === label && (
-        <motion.span className="tip" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>{label}</motion.span>
-      )}
-    </motion.a>
-  )
-
-  return (
-    <motion.nav
-      className="dock"
-      initial={{ y: 80, opacity: 0, x: '-50%' }}
-      animate={{ y: 0, opacity: 1, x: '-50%' }}
-      transition={{ delay: 1, type: 'spring', stiffness: 200, damping: 20 }}
-    >
-      {dockItems.map(renderItem)}
-      <span className="dock-sep" />
-      {renderItem({ id: 'mail', label: 'Email', icon: FiMail, href: `mailto:${profile.email}` })}
-      {renderItem({ id: 'cmd', label: 'Search ⌘K', icon: FiCommand, href: '#', onClick: (e) => { e.preventDefault(); onCmd() } })}
-    </motion.nav>
-  )
-}
-
-function Background() {
+function CursorGlow() {
   const x = useMotionValue(-1000)
   const y = useMotionValue(-1000)
-  const sx = useSpring(x, { stiffness: 80, damping: 20 })
-  const sy = useSpring(y, { stiffness: 80, damping: 20 })
+  const sx = useSpring(x, { stiffness: 90, damping: 20 })
+  const sy = useSpring(y, { stiffness: 90, damping: 20 })
   useEffect(() => {
     const move = (e) => { x.set(e.clientX); y.set(e.clientY) }
     window.addEventListener('pointermove', move)
     return () => window.removeEventListener('pointermove', move)
   }, [x, y])
-
-  return (
-    <>
-      <div className="bg-grid" />
-      <motion.div
-        className="bg-blob"
-        style={{ width: 500, height: 500, background: 'var(--accent)', top: -200, left: '10%' }}
-        animate={{ x: [0, 80, 0], y: [0, 40, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="bg-blob"
-        style={{ width: 400, height: 400, background: 'var(--accent-2)', top: -100, right: '5%' }}
-        animate={{ x: [0, -60, 0], y: [0, 60, 0] }}
-        transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div className="cursor-glow" style={{ left: sx, top: sy }} />
-      <div className="noise" />
-    </>
-  )
+  return <motion.div className="cursor-glow" style={{ left: sx, top: sy }} />
 }
+
+const navLinks = [
+  { href: '#experience', label: 'experience' },
+  { href: '#projects', label: 'work' },
+  { href: '#skills', label: 'skills' },
+  { href: '#education', label: 'education' },
+  { href: '#contact', label: 'contact' },
+]
 
 export default function App() {
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark')
   const [cmdOpen, setCmdOpen] = useState(false)
-  const time = useClock(profile.timezone)
+  const [scrolled, setScrolled] = useState(false)
   const { scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 25 })
+  const first = profile.name.split(' ').pop().toLowerCase()
 
   const toggleTheme = useCallback(() => {
     const apply = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
-    // Smooth cross-fade where the View Transitions API is supported
     if (document.startViewTransition) document.startViewTransition(apply)
     else apply()
   }, [])
@@ -126,50 +50,75 @@ export default function App() {
   }, [theme])
 
   useEffect(() => {
-    document.title = `${profile.name} — Portfolio`
+    document.title = `${profile.name} — Software Engineer`
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setCmdOpen((o) => !o) }
-      const typing = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)
-      if (!typing && !e.metaKey && !e.ctrlKey && e.key.toLowerCase() === 't') toggleTheme()
     }
+    const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [toggleTheme])
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', onScroll) }
+  }, [])
+
+  // Number only the sections that actually render
+  const sections = [
+    Experience,
+    Projects,
+    hackathons.length > 0 && Hackathons,
+    profile.github && GitHubActivity,
+    dsa.length > 0 && DSA,
+    Skills,
+    Education,
+    interests.watching.length > 0 && Interests,
+    highlights.length > 0 && Highlights,
+    Guestbook,
+  ].filter(Boolean)
 
   return (
     <>
-      <Background />
+      <CursorGlow />
+      <div className="grain" />
       <motion.div className="progress" style={{ scaleX: progress }} />
 
-      <main className="container">
-        <motion.div className="topbar" initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }}>
-          <div className="clock"><span className="live-dot" /> {time} · IST</div>
-          <div className="topbar-actions">
-            <button className="kbd-btn" onClick={() => setCmdOpen(true)}>
-              <FiCommand size={13} /> <span className="kbd-label">Command Palette</span> <kbd>⌘K</kbd>
+      <motion.nav
+        className={`nav ${scrolled ? 'scrolled' : ''}`}
+        initial={{ y: -40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.7 }}
+      >
+        <div className="wrap nav-inner">
+          <a href="#home" className="logo"><span className="spark">✺</span>{first}</a>
+          <div className="nav-links">
+            {navLinks.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
+          </div>
+          <div className="nav-actions">
+            <button className="icon-btn" onClick={() => setCmdOpen(true)} aria-label="Open command palette">
+              <FiCommand size={13} /><span className="kbd-label">K</span>
             </button>
             <motion.button className="icon-btn" onClick={toggleTheme} whileTap={{ rotate: 180, scale: 0.9 }} aria-label="Toggle theme">
-              {theme === 'dark' ? <FiSun size={15} /> : <FiMoon size={15} />}
+              {theme === 'dark' ? <FiSun size={14} /> : <FiMoon size={14} />}
             </motion.button>
+            <a className="btn btn-fire btn-sm" href={`mailto:${profile.email}`}>hire me</a>
           </div>
-        </motion.div>
+        </div>
+      </motion.nav>
 
-        <Hero />
-        <Experience />
-        <Projects />
-        {hackathons.length > 0 && <Hackathons />}
-        {profile.github && <GitHubActivity />}
-        {dsa.length > 0 && <DSA />}
-        <Skills />
-        <Education />
-        {interests.watching.length > 0 && <Interests />}
-        {highlights.length > 0 && <Highlights />}
-        <Guestbook />
-        <Quote />
-        <Footer />
+      <main>
+        <div className="wrap"><Hero /></div>
+        <Marquee
+          className="tilt"
+          items={['infosys', 'agentic ai', 'flutter apps', 'full-stack', 'samsung prism', 'computer vision', 'rest apis', 'supabase']}
+        />
+        {sections.map((S, i) => (
+          <S key={i} n={i + 1} />
+        ))}
+        <div style={{ marginTop: 120 }}>
+          <Marquee className="rev" items={Object.values(skills).flat()} />
+        </div>
+        <Contact />
       </main>
+      <Footer />
 
-      <Dock onCmd={() => setCmdOpen(true)} />
       <CommandPalette open={cmdOpen} setOpen={setCmdOpen} theme={theme} toggleTheme={toggleTheme} />
     </>
   )

@@ -16,6 +16,7 @@ export const navSections = [
   { id: 'interests', label: 'Interests' },
   { id: 'highlights', label: 'Highlights' },
   { id: 'guestbook', label: 'Guestbook' },
+  { id: 'contact', label: 'Contact' },
 ]
 
 export default function CommandPalette({ open, setOpen, theme, toggleTheme }) {
@@ -30,7 +31,7 @@ export default function CommandPalette({ open, setOpen, theme, toggleTheme }) {
     })),
     {
       group: 'Actions', label: `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`, icon: theme === 'dark' ? FiSun : FiMoon,
-      hint: 'T', run: toggleTheme,
+      run: toggleTheme,
     },
     { group: 'Actions', label: 'Copy email', icon: FiCopy, run: () => navigator.clipboard?.writeText(profile.email) },
     ...(profile.calLink ? [{ group: 'Actions', label: 'Book an intro call', icon: FiCalendar, run: () => window.open(profile.calLink, '_blank') }] : []),

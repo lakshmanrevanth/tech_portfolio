@@ -1,17 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiMapPin, FiCalendar, FiMail, FiCheck } from 'react-icons/fi'
-import { HiCheckBadge } from 'react-icons/hi2'
+import { FiArrowRight, FiClock } from 'react-icons/fi'
 import { profile, socials } from '../data'
-import { icons, Magnetic } from './ui'
+import { Magnetic, SplitText, icons } from './ui'
 
-const ease = [0.22, 1, 0.36, 1]
-const item = {
-  hidden: { opacity: 0, y: 20, filter: 'blur(6px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease } },
-}
+const easeOut = [0.22, 1, 0.36, 1]
 
-function useTypewriter(words, speed = 70, pause = 1600) {
+function useTypewriter(words, speed = 65, pause = 1600) {
   const [text, setText] = useState('')
   const [i, setI] = useState(0)
   const [deleting, setDeleting] = useState(false)
@@ -35,108 +30,148 @@ function useTypewriter(words, speed = 70, pause = 1600) {
   return text
 }
 
-function MeshBanner() {
-  const blobs = [
-    { c: '#7c5cff', s: 340, x: '10%', y: '20%', d: 14 },
-    { c: '#22d3ee', s: 300, x: '55%', y: '10%', d: 18 },
-    { c: '#f472b6', s: 280, x: '75%', y: '55%', d: 16 },
-    { c: '#34d399', s: 260, x: '30%', y: '60%', d: 20 },
-  ]
-  return (
-    <motion.div
-      className="banner"
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 1, ease }}
-    >
-      <div className="mesh">
-        {blobs.map((b, i) => (
-          <motion.span
-            key={i}
-            style={{ width: b.s, height: b.s, left: b.x, top: b.y, background: b.c }}
-            animate={{ x: [0, 60, -40, 0], y: [0, -30, 40, 0], scale: [1, 1.15, 0.9, 1] }}
-            transition={{ duration: b.d, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        ))}
-      </div>
-      <div className="banner-grid" />
-      <div className="banner-text">{profile.handle || profile.name.split(' ').pop()} · portfolio</div>
-    </motion.div>
-  )
+function useClock(tz) {
+  const fmt = () => new Date().toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const [time, setTime] = useState(fmt)
+  useEffect(() => {
+    const t = setInterval(() => setTime(fmt()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  return time
+}
+
+// Rising ember particles behind the hero
+function Embers() {
+  const ref = useRef(null)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const canvas = ref.current
+    const ctx = canvas.getContext('2d')
+    let w, h, raf
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const resize = () => {
+      w = canvas.offsetWidth
+      h = canvas.offsetHeight
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    const spawn = (y = h + Math.random() * h * 0.3) => ({
+      x: Math.random() * w, y, r: Math.random() * 1.8 + 0.4,
+      vy: Math.random() * 0.5 + 0.15, vx: (Math.random() - 0.5) * 0.25, life: Math.random() * Math.PI * 2,
+    })
+    const parts = Array.from({ length: 70 }, () => spawn(Math.random() * h))
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--ember').trim() || '#ff5b1f'
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h)
+      for (const p of parts) {
+        p.y -= p.vy
+        p.life += 0.02
+        p.x += p.vx + Math.sin(p.life) * 0.2
+        if (p.y < -10) Object.assign(p, spawn())
+        const fade = Math.min(1, p.y / h) * (0.5 + Math.sin(p.life * 2) * 0.3)
+        ctx.globalAlpha = Math.max(0, fade)
+        ctx.fillStyle = color
+        ctx.shadowColor = color
+        ctx.shadowBlur = 8
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      raf = requestAnimationFrame(draw)
+    }
+    draw()
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize) }
+  }, [])
+  return <canvas ref={ref} className="embers" aria-hidden />
 }
 
 export default function Hero() {
   const role = useTypewriter(profile.roles)
-  const initials = profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2)
+  const time = useClock(profile.timezone)
+  const first = profile.name.split(' ').pop().toLowerCase()
 
   return (
-    <header id="home">
-      <MeshBanner />
+    <header id="home" className="hero">
+      <Embers />
+      <motion.div
+        className="hero-top"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.1, ease: easeOut }}
+      >
+        <span className="avail"><span className="dot-live" /> currently @ infosys · specialist programmer</span>
+        <span className="eyebrow"><FiClock size={12} /> {time} IST</span>
+      </motion.div>
 
-      <div className="hero-row">
-        <motion.div
-          className="avatar"
-          initial={{ opacity: 0, scale: 0.6, rotate: -20 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 160, damping: 14, delay: 0.3 }}
-        >
-          <div className="avatar-inner">
-            {profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : initials}
+      <SplitText
+        as="h1"
+        className="hero-title"
+        animateNow
+        delay={0.25}
+        stagger={0.07}
+        segments={[
+          { t: "hi, i'm " }, { t: first, className: 'dbl' }, { t: '.' }, { br: true },
+          { t: 'i build apps' }, { br: true },
+          { t: 'people use.' },
+        ]}
+      />
+
+      <div className="hero-bottom">
+        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 1, ease: easeOut }}>
+          <p className="hero-bio">
+            <strong>{profile.name}</strong> — {profile.bio}
+          </p>
+          <div className="hero-ctas">
+            <Magnetic>
+              <a className="btn btn-fire" href={`mailto:${profile.email}`}>
+                Get in touch <FiArrowRight className="arrow" />
+              </a>
+            </Magnetic>
+            <a className="btn btn-ghost" href="#projects"><span>See my work</span> ↓</a>
           </div>
-          <span className="status" title="Open to opportunities" />
+          <div className="hero-socials">
+            {socials.map((s) => {
+              const Icon = icons[s.icon]
+              const external = !s.href.startsWith('mailto:')
+              return (
+                <a
+                  key={s.label}
+                  className="hero-social"
+                  href={s.href}
+                  target={external ? '_blank' : undefined}
+                  rel="noreferrer"
+                  aria-label={s.label}
+                >
+                  <Icon size={16} /> <span>{s.label}</span>
+                </a>
+              )
+            })}
+          </div>
         </motion.div>
 
-        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08, delayChildren: 0.45 } } }}>
-          <motion.h1 variants={item} className="hero-name">
-            {profile.name} <HiCheckBadge className="verified" />
-          </motion.h1>
-          <motion.div variants={item} className="hero-meta">
-            <span><FiMapPin size={13} /> {profile.location}</span>
-            {profile.handle && <span>@{profile.handle}</span>}
-          </motion.div>
+        <motion.div
+          className="term"
+          initial={{ opacity: 0, y: 30, rotate: 2 }}
+          animate={{ opacity: 1, y: 0, rotate: 0 }}
+          transition={{ duration: 1, delay: 1.15, ease: easeOut }}
+        >
+          <div className="term-top"><i /><i /><i /><span>~/{first} — zsh</span></div>
+          <div className="term-body">
+            <div><span className="p">$</span> whoami</div>
+            <div className="hl">{role}<span className="caret" /></div>
+            <div><span className="p">$</span> cat highlights.txt</div>
+            {profile.highlights.map((h) => (
+              <div key={h}><span className="ok">✓</span> {h}</div>
+            ))}
+          </div>
         </motion.div>
       </div>
 
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.6 } } }}
-      >
-        <motion.div variants={item} className="roles">
-          &gt; {role}<span className="caret" />
-        </motion.div>
-        <motion.p variants={item} className="bio">{profile.bio}</motion.p>
-        <motion.ul variants={item} className="bio-highlights">
-          {profile.highlights.map((h) => (
-            <li key={h}><FiCheck size={14} /> {h}</li>
-          ))}
-        </motion.ul>
-
-        <motion.div variants={item} className="cta-row">
-          {profile.calLink && (
-            <Magnetic>
-              <a className="btn btn-primary" href={profile.calLink} target="_blank" rel="noreferrer">
-                <FiCalendar size={15} /> Book an intro call
-              </a>
-            </Magnetic>
-          )}
-          <Magnetic>
-            <a className={`btn ${profile.calLink ? '' : 'btn-primary'}`} href={`mailto:${profile.email}`}>
-              <FiMail size={15} /> Send an email
-            </a>
-          </Magnetic>
-        </motion.div>
-
-        <motion.div variants={item} className="socials">
-          {socials.map((s) => {
-            const Icon = icons[s.icon]
-            return (
-              <a key={s.label} className="social" href={s.href} target={s.href.startsWith('mailto:') ? undefined : '_blank'} rel="noreferrer">
-                <Icon size={14} /> {s.label}
-              </a>
-            )
-          })}
-        </motion.div>
+      <motion.div className="scroll-cue" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }}>
+        <span className="line" /> keep scrolling
       </motion.div>
     </header>
   )
