@@ -95,6 +95,15 @@ export const experiences = [
 
 export const projects = [
   {
+    title: 'dsarecx · DSA Recall',
+    status: 'Live',
+    description: 'Open-source spaced-repetition tracker for interview prep. Add a problem once and it schedules reviews at growing intervals (3 → 7 → 14 → 30 days), adjusting to how well you recalled it. Auto-fills details from 18,000+ LeetCode, Codeforces, GFG, HackerRank and CodeChef problems, and includes a 58-concept system design library with AI-generated recall questions.',
+    tags: ['Next.js', 'TypeScript', 'Prisma', 'Neon Postgres', 'Vercel'],
+    href: 'https://github.com/lakshmanrevanth/dsarecx',
+    live: 'https://dsarecx.vercel.app',
+    hue: 150,
+  },
+  {
     title: 'Kosh · Personal Finance',
     status: 'In progress',
     ongoing: true,
