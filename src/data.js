@@ -10,7 +10,7 @@ export const profile = {
   highlights: [
     'Specialist Programmer at Infosys — promoted to full-time after training',
     'Engineer Intern at Samsung PRISM — image captioning & hashtag generation with CNN-LSTM and T5',
-    'Built cross-platform apps (Play-T, NoteMate) and a gesture-controlled virtual mouse',
+    'Building dsarecx (spaced-repetition DSA tracker), Kosh (Android finance app) and CheckLater (Chrome extension)',
     'B.Tech CSE (Software Engineering), SRM IST · CGPA 8.65/10',
   ],
   email: 'revanth3527@gmail.com',
