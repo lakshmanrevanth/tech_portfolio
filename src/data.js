@@ -10,7 +10,7 @@ export const profile = {
   highlights: [
     'Specialist Programmer at Infosys — promoted to full-time after training',
     'Engineer Intern at Samsung PRISM — image captioning & hashtag generation with CNN-LSTM and T5',
-    'Building dsarecx (spaced-repetition DSA tracker), Kosh (Android finance app) and CheckLater (Chrome extension)',
+    'Building dsarecx (spaced-repetition DSA tracker), Kosh (Android finance app) and Laterbeam (Chrome extension)',
     'B.Tech CSE (Software Engineering), SRM IST · CGPA 8.65/10',
   ],
   email: 'revanth3527@gmail.com',
@@ -113,7 +113,7 @@ export const projects = [
     hue: 30,
   },
   {
-    title: 'CheckLater · Save Links',
+    title: 'Laterbeam · Save Links',
     status: 'Live',
     description: 'Chrome extension and installable web app (PWA) for saving links now and opening them later on any device. One sync code replaces passwords. It sorts links into categories automatically, removes tracking parameters, syncs live and works offline.',
     tags: ['JavaScript', 'Chrome Extension', 'PWA', 'Firebase'],
