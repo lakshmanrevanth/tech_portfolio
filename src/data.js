@@ -118,7 +118,7 @@ export const projects = [
     description: 'Chrome extension and installable web app (PWA) for saving links now and opening them later on any device. One sync code replaces passwords. It sorts links into categories automatically, removes tracking parameters, syncs live and works offline.',
     tags: ['JavaScript', 'Chrome Extension', 'PWA', 'Firebase'],
     href: 'https://github.com/lakshmanrevanth/check-later-extension',
-    live: 'https://checklater-ea1ba.web.app',
+    live: 'https://laterbeam.web.app/',
     hue: 240,
   },
   {
